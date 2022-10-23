@@ -190,3 +190,4 @@ for index, row in df_patient_procedure.iterrows():
 # try and insert a new row with a random mrn and a random icd10_code
 db_azure.execute(insertQuery, (random.randint(1, 1000000),
                  random.choice(df_conditions['icd10_code'])))
+# what happens and why?
