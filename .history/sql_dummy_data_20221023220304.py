@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import dbm
 import pandas as pd
 import sqlalchemy
@@ -113,7 +116,7 @@ df_azure = pd.read_sql_query("SELECT * FROM sx_procedure", db_azure)
 
 # now lets create some fake patient_conditions
 
-# first, query conditions and patients to get the ids
+# first, lets query conditions and patients to get the ids
 df_conditions = pd.read_sql_query(
     "SELECT icd10_code FROM conditions", db_azure)
 df_patients = pd.read_sql_query(
@@ -151,25 +154,28 @@ df_patients = pd.read_sql_query(
     "SELECT mrn FROM patients", db_azure)
 
 # create a dataframe that is stacked and give each patient a random number of procedures between 1 and 5
-df_patient_procedure = pd.DataFrame(columns=['mrn', 'proc_cpt'])
-# for each patient in df_patient_procedure, take a random number of procedures between 1 and 10 from df_procedure and place it in df_patient_procedure
+df_patients_procedure = pd.DataFrame(columns=['mrn', 'proc_cpt'])
+# for each patient in df_patients_procedure, take a random number of procedures between 1 and 10 from df_procedure and place it in df_patients_procedure
 for index, row in df_patients.iterrows():
     # get a random number of procedure between 1 and 5
     numProcedures = random.randint(1, 5)
-    # get a random sample of procedures from df_patient_procedure
+    # get a random sample of procedures from df_patients_procedure
     df_procedure_sample = df_procedure.sample(n=numProcedures)
     # add the mrn to the df_procedure_sample
     df_procedure_sample['mrn'] = row['mrn']
-    # append the df_procedure_sample to df_patient_procedure
-    df_patient_procedure = df_patient_procedure.append(
+    # append the df_procedure_sample to df_patients_procedure
+    df_patients_procedure = df_patients_procedure.append(
         df_procedure_sample)
 
-print(df_patient_procedure)
+print(df_patients_procedure)
 
-# add a random procedure to each patient
-insertQuery = "INSERT INTO patient_procedure (mrn, proc_cpt) VALUES (%s, %s)"
+# now lets add a random procedure to each patient
+insertQuery = "INSERT INTO patients_procedure (mrn, proc_cpt) VALUES (%s, %s)"
 
-for index, row in df_patient_procedure.iterrows():
+for index, row in df_patients_procedure.iterrows():
     db_azure.execute(insertQuery, (row['mrn'], row['proc_cpt']))
     print("inserted row: ", index)
 
+# try and insert a new row with a random mrn and a random icd10_code
+db_azure.execute(insertQuery, (random.randint(1, 1000000),
+                 random.choice(df_conditions['icd10_code'])))

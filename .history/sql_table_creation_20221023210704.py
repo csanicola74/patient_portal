@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import dbm
 import pandas as pd
 import sqlalchemy
@@ -7,7 +10,6 @@ import os
 
 load_dotenv()
 
-####  CONNECT TO AZURE MYSQL SERVER  ####
 AZURE_MYSQL_HOSTNAME = os.getenv("AZURE_MYSQL_HOSTNAME")
 AZURE_MYSQL_USER = os.getenv("AZURE_MYSQL_USER")
 AZURE_MYSQL_PASSWORD = os.getenv("AZURE_MYSQL_PASSWORD")
@@ -19,21 +21,21 @@ AZURE_MYSQL_DATABASE = os.getenv("AZURE_MYSQL_DATABASE")
 connection_string_azure = f'mysql+pymysql://{AZURE_MYSQL_USER}:{AZURE_MYSQL_PASSWORD}@{AZURE_MYSQL_HOSTNAME}:3306/{AZURE_MYSQL_DATABASE}'
 db_azure = create_engine(connection_string_azure)
 
-####  SHOW ALL THE TABLES FROM THE DATABASE  ####
+# show tables from databases
 tableNames_azure = db_azure.table_names()
 
-# reorder tables: patient_conditions, patient_procedure, sx_procedure, patients, conditions
+# reoder tables: patient_conditions, patient_procedure, procedure, patients, conditions
 tableNames_azure = ['patient_conditions', 'patient_procedure',
-                    'sx_procedure', 'patients', 'conditions']
+                    'procedure', 'patients', 'conditions']
 
 # first step below is just creating a basic version of each of the tables,
 # along with the primary keys and default values
 
-####  CREATE TABLES  ####
+###
 table_patients = """
 create table if not exists patients (
     id int auto_increment,
-    mrn varchar(255) default null unique,
+    mrn int(8) default null unique,
     first_name varchar(255) default null,
     last_name varchar(255) default null,
     zip_code varchar(255) default null,
@@ -64,10 +66,10 @@ create table if not exists conditions (
 """
 
 
-table_patient_procedure = """
-create table if not exists patient_procedure (
+table_patients_procedure = """
+create table if not exists patients_procedure (
     id int auto_increment,
-    mrn varchar(255) default null,
+    mrn int(8) default null,
     proc_cpt varchar(255) default null,
     PRIMARY KEY (id),
     FOREIGN KEY (mrn) REFERENCES patients(mrn) ON DELETE CASCADE,
@@ -79,7 +81,7 @@ create table if not exists patient_procedure (
 table_patient_conditions = """
 create table if not exists patient_conditions (
     id int auto_increment,
-    mrn varchar(255) default null,
+    mrn int(8) default null,
     icd10_code varchar(255) default null,
     PRIMARY KEY (id),
     FOREIGN KEY (mrn) REFERENCES patients(mrn) ON DELETE CASCADE,
@@ -91,9 +93,17 @@ create table if not exists patient_conditions (
 db_azure.execute(table_patients)
 db_azure.execute(table_sx_procedure)
 db_azure.execute(table_conditions)
-db_azure.execute(table_patient_procedure)
+db_azure.execute(table_patients_procedure)
 db_azure.execute(table_patient_conditions)
 
 
+# get tables from db_azure
+azure_tables = db_azure.table_names()
+
+
+droppingFunction_limited(azure_tables, db_azure)
+
+
+# confirm that it worked
 # get tables from db_azure
 azure_tables = db_azure.table_names()

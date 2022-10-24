@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import dbm
 import pandas as pd
 import sqlalchemy
@@ -113,7 +116,7 @@ df_azure = pd.read_sql_query("SELECT * FROM sx_procedure", db_azure)
 
 # now lets create some fake patient_conditions
 
-# first, query conditions and patients to get the ids
+# first, lets query conditions and patients to get the ids
 df_conditions = pd.read_sql_query(
     "SELECT icd10_code FROM conditions", db_azure)
 df_patients = pd.read_sql_query(
@@ -166,10 +169,13 @@ for index, row in df_patients.iterrows():
 
 print(df_patient_procedure)
 
-# add a random procedure to each patient
+# now lets add a random procedure to each patient
 insertQuery = "INSERT INTO patient_procedure (mrn, proc_cpt) VALUES (%s, %s)"
 
 for index, row in df_patient_procedure.iterrows():
     db_azure.execute(insertQuery, (row['mrn'], row['proc_cpt']))
     print("inserted row: ", index)
 
+# try and insert a new row with a random mrn and a random icd10_code
+db_azure.execute(insertQuery, (random.randint(1, 1000000),
+                 random.choice(df_conditions['icd10_code'])))

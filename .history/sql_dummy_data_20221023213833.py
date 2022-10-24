@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import dbm
 import pandas as pd
 import sqlalchemy
@@ -71,7 +74,7 @@ df_azure = pd.read_sql_query("SELECT * FROM patients", db_azure)
 
 ########## INSERTING IN FAKE CONDITIONS ##########
 
-insertQuery = "INSERT INTO conditions (icd10_code, icd10_desc) VALUES (%s, %s)"
+insertQuery = "INSERT INTO conditions (icd10_code, icd10_description) VALUES (%s, %s)"
 
 startingRow = 0
 for index, row in icd10codesShort_1k.iterrows():
@@ -90,14 +93,14 @@ df_azure = pd.read_sql_query("SELECT * FROM conditions", db_azure)
 
 insertQuery = "INSERT INTO sx_procedure (proc_cpt, proc_desc) VALUES (%s, %s)"
 
-procRowCount = 0
+medRowCount = 0
 for index, row in cpt_codes_1k.iterrows():
-    procRowCount += 1
+    medRowCount += 1
     db_azure.execute(
         insertQuery, (row['com.medigy.persist.reference.type.clincial.CPT.code'], row['label']))
     print("inserted row: ", index)
     # stop once we have 50 rows
-    if procRowCount == 50:
+    if medRowCount == 50:
         break
 
 # cpt_codes_1k_moded = cpt_codes_1k.rename(columns={'com.medigy.persist.reference.type.clincial.CPT.code': 'proc_cpt', 'label': 'proc_desc'})
@@ -113,14 +116,14 @@ df_azure = pd.read_sql_query("SELECT * FROM sx_procedure", db_azure)
 
 # now lets create some fake patient_conditions
 
-# first, query conditions and patients to get the ids
+# first, lets query conditions and patients to get the ids
 df_conditions = pd.read_sql_query(
     "SELECT icd10_code FROM conditions", db_azure)
 df_patients = pd.read_sql_query(
     "SELECT mrn FROM patients", db_azure)
 
 # create a dataframe that is stacked and give each patient a random number of conditions between 1 and 5
-df_patient_conditions = pd.DataFrame(columns=['mrn', 'icd10_code'])
+df_conditions = pd.DataFrame(columns=['mrn', 'icd10_code'])
 # for each patient in df_patient_conditions, take a random number of conditions between 1 and 10 from df_conditions and place it in df_patient_conditions
 for index, row in df_patients.iterrows():
     # get a random number of conditions between 1 and 5
@@ -146,19 +149,19 @@ for index, row in df_patient_conditions.iterrows():
 # first, lets query procedure and patients to get the ids
 
 df_procedure = pd.read_sql_query(
-    "SELECT proc_cpt FROM sx_procedure", db_azure)
+    "SELECT med_ndc FROM sx_procedure", db_azure)
 df_patients = pd.read_sql_query(
     "SELECT mrn FROM patients", db_azure)
 
 # create a dataframe that is stacked and give each patient a random number of procedures between 1 and 5
-df_patient_procedure = pd.DataFrame(columns=['mrn', 'proc_cpt'])
+df_patient_procedure = pd.DataFrame(columns=['mrn', 'cpt_code'])
 # for each patient in df_patient_procedure, take a random number of procedures between 1 and 10 from df_procedure and place it in df_patient_procedure
 for index, row in df_patients.iterrows():
     # get a random number of procedure between 1 and 5
     numProcedures = random.randint(1, 5)
-    # get a random sample of procedures from df_patient_procedure
+    # get a random sample of medications from df_medications
     df_procedure_sample = df_procedure.sample(n=numProcedures)
-    # add the mrn to the df_procedure_sample
+    # add the mrn to the df_medications_sample
     df_procedure_sample['mrn'] = row['mrn']
     # append the df_procedure_sample to df_patient_procedure
     df_patient_procedure = df_patient_procedure.append(
@@ -166,10 +169,13 @@ for index, row in df_patients.iterrows():
 
 print(df_patient_procedure)
 
-# add a random procedure to each patient
-insertQuery = "INSERT INTO patient_procedure (mrn, proc_cpt) VALUES (%s, %s)"
+# now lets add a random procedure to each patient
+insertQuery = "INSERT INTO patient_procedure (mrn, cpt_code) VALUES (%s, %s)"
 
 for index, row in df_patient_procedure.iterrows():
-    db_azure.execute(insertQuery, (row['mrn'], row['proc_cpt']))
+    db_azure.execute(insertQuery, (row['mrn'], row['cpt_code']))
     print("inserted row: ", index)
 
+# try and insert a new row with a random mrn and a random icd10_code
+db_azure.execute(insertQuery, (random.randint(1, 1000000),
+                 random.choice(df_conditions['icd10_code'])))

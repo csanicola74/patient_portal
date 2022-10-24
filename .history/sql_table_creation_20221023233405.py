@@ -22,14 +22,14 @@ db_azure = create_engine(connection_string_azure)
 ####  SHOW ALL THE TABLES FROM THE DATABASE  ####
 tableNames_azure = db_azure.table_names()
 
-# reorder tables: patient_conditions, patient_procedure, sx_procedure, patients, conditions
+# reoder tables: patient_conditions, patient_procedure, procedure, patients, conditions
 tableNames_azure = ['patient_conditions', 'patient_procedure',
-                    'sx_procedure', 'patients', 'conditions']
+                    'procedure', 'patients', 'conditions']
 
 # first step below is just creating a basic version of each of the tables,
 # along with the primary keys and default values
 
-####  CREATE TABLES  ####
+###
 table_patients = """
 create table if not exists patients (
     id int auto_increment,
