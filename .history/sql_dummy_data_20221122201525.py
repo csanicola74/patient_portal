@@ -136,7 +136,8 @@ for index, row in ndc_codes_1k.iterrows():
 # ndc_codes_1k_moded.to_sql('production_medications', con=db_gcp, if_exists='replace', index=False)
 
 # query dbs to see if data is there
-df_azure = pd.read_sql_query("SELECT * FROM medications", db_azure)
+df_azure = pd.read_sql_query("SELECT * FROM production_medications", db_azure)
+df_gcp = pd.read_sql_query("SELECT * FROM production_medications", db_gcp)
 
 
 # cpt_codes_1k_moded = cpt_codes_1k.rename(columns={'com.medigy.persist.reference.type.clincial.CPT.code': 'proc_cpt', 'label': 'proc_desc'})
@@ -237,7 +238,7 @@ for index, row in df_patients.iterrows():
 print(df_patient_medications.head(10))
 
 # add a random procedure to each patient
-insertQuery = "INSERT INTO patient_medications (mrn, med_ndc) VALUES (%s, %s)"
+insertQuery = "INSERT INTO patient_procedure (mrn, med_ndc) VALUES (%s, %s)"
 
 for index, row in df_patient_medications.iterrows():
     db_azure.execute(insertQuery, (row['mrn'], row['med_ndc']))

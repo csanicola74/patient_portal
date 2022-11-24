@@ -44,7 +44,7 @@ create table if not exists patients (
     contact_home varchar(255) default null,
     insurance varchar(255) default null,
     PRIMARY KEY (id) 
-);
+); 
 """
 
 table_sx_procedure = """

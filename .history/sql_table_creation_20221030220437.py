@@ -42,9 +42,8 @@ create table if not exists patients (
     gender varchar(255) default null,
     contact_mobile varchar(255) default null,
     contact_home varchar(255) default null,
-    insurance varchar(255) default null,
     PRIMARY KEY (id) 
-);
+); 
 """
 
 table_sx_procedure = """
@@ -111,10 +110,8 @@ create table if not exists patient_medications (
 db_azure.execute(table_patients)
 db_azure.execute(table_sx_procedure)
 db_azure.execute(table_conditions)
-db_azure.execute(table_medications)
 db_azure.execute(table_patient_procedure)
 db_azure.execute(table_patient_conditions)
-db_azure.execute(table_patients_medications)
 
 
 # get tables from db_azure

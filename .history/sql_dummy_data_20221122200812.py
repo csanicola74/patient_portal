@@ -65,14 +65,6 @@ cpt_codes_1k = cpt_codes.sample(n=1000, random_state=1)
 cpt_codes_1k = cpt_codes_1k.drop_duplicates(
     subset=['com.medigy.persist.reference.type.clincial.CPT.code'], keep='first')
 
-# real ndc codes
-ndc_codes = pd.read_csv(
-    'https://raw.githubusercontent.com/hantswilliams/FDA_NDC_CODES/main/NDC_2022_product.csv')
-ndc_codes_1k = ndc_codes.sample(n=1000, random_state=1)
-# drop duplicates from ndc_codes_1k
-ndc_codes_1k = ndc_codes_1k.drop_duplicates(
-    subset=['PRODUCTNDC'], keep='first')
-
 
 ########## INSERTING IN FAKE PATIENTS ##########
 # Approach 1: pandas to_sql
@@ -111,33 +103,6 @@ for index, row in cpt_codes_1k.iterrows():
     # stop once we have 50 rows
     if procRowCount == 50:
         break
-
-
-########## INSERTING IN FAKE MEDICATIONS ##########
-
-insertQuery = "INSERT INTO medications (med_ndc, med_human_name) VALUES (%s, %s)"
-
-medRowCount = 0
-for index, row in ndc_codes_1k.iterrows():
-    medRowCount += 1
-    db_azure.execute(
-        insertQuery, (row['PRODUCTNDC'], row['NONPROPRIETARYNAME']))
-    print("inserted row: ", index)
-    # stop once we have 50 rows
-    if medRowCount == 75:
-        break
-
-# ndc_codes_1k_moded = ndc_codes_1k.rename(columns={'PRODUCTNDC': 'med_ndc', 'NONPROPRIETARYNAME': 'med_human_name'})
-# ndc_codes_1k_moded = ndc_codes_1k_moded.drop(columns=['PROPRIETARYNAME'])
-# ## keep only first 100 characters for each med_human_name
-# ndc_codes_1k_moded['med_human_name'] = ndc_codes_1k_moded['med_human_name'].str[:100]
-
-# ndc_codes_1k_moded.to_sql('production_medications', con=db_azure, if_exists='replace', index=False)
-# ndc_codes_1k_moded.to_sql('production_medications', con=db_gcp, if_exists='replace', index=False)
-
-# query dbs to see if data is there
-df_azure = pd.read_sql_query("SELECT * FROM medications", db_azure)
-
 
 # cpt_codes_1k_moded = cpt_codes_1k.rename(columns={'com.medigy.persist.reference.type.clincial.CPT.code': 'proc_cpt', 'label': 'proc_desc'})
 # cpt_codes_1k_moded = cpt_codes_1k_moded.drop(columns=['label'])
@@ -216,29 +181,29 @@ for index, row in df_patient_procedure.iterrows():
 # first, lets query procedure and patients to get the ids
 
 df_medications = pd.read_sql_query(
-    "SELECT med_ndc FROM medications", db_azure)
+    "SELECT proc_cpt FROM medications", db_azure)
 df_patients = pd.read_sql_query(
     "SELECT mrn FROM patients", db_azure)
 
 # create a dataframe that is stacked and give each patient a random number of procedures between 1 and 5
-df_patient_medications = pd.DataFrame(columns=['mrn', 'med_ndc'])
+df_patient_medications = pd.DataFrame(columns=['mrn', 'proc_cpt'])
 # for each patient in df_patient_procedure, take a random number of procedures between 1 and 10 from df_procedure and place it in df_patient_procedure
 for index, row in df_patients.iterrows():
     # get a random number of procedure between 1 and 5
-    numMedications = random.randint(1, 5)
+    numProcedures = random.randint(1, 5)
     # get a random sample of procedures from df_patient_procedure
-    df_medications_sample = df_medications.sample(n=numMedications)
+    df_procedure_sample = df_procedure.sample(n=numProcedures)
     # add the mrn to the df_procedure_sample
-    df_medications_sample['mrn'] = row['mrn']
+    df_procedure_sample['mrn'] = row['mrn']
     # append the df_procedure_sample to df_patient_procedure
-    df_patient_medications = df_patient_medications.append(
-        df_medications_sample)
+    df_patient_procedure = df_patient_procedure.append(
+        df_procedure_sample)
 
-print(df_patient_medications.head(10))
+print(df_patient_procedure)
 
 # add a random procedure to each patient
-insertQuery = "INSERT INTO patient_medications (mrn, med_ndc) VALUES (%s, %s)"
+insertQuery = "INSERT INTO patient_procedure (mrn, proc_cpt) VALUES (%s, %s)"
 
-for index, row in df_patient_medications.iterrows():
-    db_azure.execute(insertQuery, (row['mrn'], row['med_ndc']))
+for index, row in df_patient_procedure.iterrows():
+    db_azure.execute(insertQuery, (row['mrn'], row['proc_cpt']))
     print("inserted row: ", index)

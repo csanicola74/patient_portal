@@ -65,14 +65,13 @@ cpt_codes_1k = cpt_codes.sample(n=1000, random_state=1)
 cpt_codes_1k = cpt_codes_1k.drop_duplicates(
     subset=['com.medigy.persist.reference.type.clincial.CPT.code'], keep='first')
 
-# real ndc codes
-ndc_codes = pd.read_csv(
-    'https://raw.githubusercontent.com/hantswilliams/FDA_NDC_CODES/main/NDC_2022_product.csv')
-ndc_codes_1k = ndc_codes.sample(n=1000, random_state=1)
-# drop duplicates from ndc_codes_1k
-ndc_codes_1k = ndc_codes_1k.drop_duplicates(
-    subset=['PRODUCTNDC'], keep='first')
-
+# real cpt codes
+cpt_codes = pd.read_csv(
+    "https://gist.githubusercontent.com/lieldulev/439793dc3c5a6613b661c33d71fdd185/raw/25c3abcc5c24e640a0a5da1ee04198a824bf58fa/cpt4.csv")
+cpt_codes_1k = cpt_codes.sample(n=1000, random_state=1)
+# drop duplicates from cpt_codes_1k
+cpt_codes_1k = cpt_codes_1k.drop_duplicates(
+    subset=['com.medigy.persist.reference.type.clincial.CPT.code'], keep='first')
 
 ########## INSERTING IN FAKE PATIENTS ##########
 # Approach 1: pandas to_sql
@@ -111,33 +110,6 @@ for index, row in cpt_codes_1k.iterrows():
     # stop once we have 50 rows
     if procRowCount == 50:
         break
-
-
-########## INSERTING IN FAKE MEDICATIONS ##########
-
-insertQuery = "INSERT INTO medications (med_ndc, med_human_name) VALUES (%s, %s)"
-
-medRowCount = 0
-for index, row in ndc_codes_1k.iterrows():
-    medRowCount += 1
-    db_azure.execute(
-        insertQuery, (row['PRODUCTNDC'], row['NONPROPRIETARYNAME']))
-    print("inserted row: ", index)
-    # stop once we have 50 rows
-    if medRowCount == 75:
-        break
-
-# ndc_codes_1k_moded = ndc_codes_1k.rename(columns={'PRODUCTNDC': 'med_ndc', 'NONPROPRIETARYNAME': 'med_human_name'})
-# ndc_codes_1k_moded = ndc_codes_1k_moded.drop(columns=['PROPRIETARYNAME'])
-# ## keep only first 100 characters for each med_human_name
-# ndc_codes_1k_moded['med_human_name'] = ndc_codes_1k_moded['med_human_name'].str[:100]
-
-# ndc_codes_1k_moded.to_sql('production_medications', con=db_azure, if_exists='replace', index=False)
-# ndc_codes_1k_moded.to_sql('production_medications', con=db_gcp, if_exists='replace', index=False)
-
-# query dbs to see if data is there
-df_azure = pd.read_sql_query("SELECT * FROM medications", db_azure)
-
 
 # cpt_codes_1k_moded = cpt_codes_1k.rename(columns={'com.medigy.persist.reference.type.clincial.CPT.code': 'proc_cpt', 'label': 'proc_desc'})
 # cpt_codes_1k_moded = cpt_codes_1k_moded.drop(columns=['label'])
@@ -216,7 +188,7 @@ for index, row in df_patient_procedure.iterrows():
 # first, lets query procedure and patients to get the ids
 
 df_medications = pd.read_sql_query(
-    "SELECT med_ndc FROM medications", db_azure)
+    "SELECT proc_cpt FROM medications", db_azure)
 df_patients = pd.read_sql_query(
     "SELECT mrn FROM patients", db_azure)
 
@@ -237,7 +209,7 @@ for index, row in df_patients.iterrows():
 print(df_patient_medications.head(10))
 
 # add a random procedure to each patient
-insertQuery = "INSERT INTO patient_medications (mrn, med_ndc) VALUES (%s, %s)"
+insertQuery = "INSERT INTO patient_procedure (mrn, med_ndc) VALUES (%s, %s)"
 
 for index, row in df_patient_medications.iterrows():
     db_azure.execute(insertQuery, (row['mrn'], row['med_ndc']))

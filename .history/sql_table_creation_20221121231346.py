@@ -31,21 +31,19 @@ tableNames_azure = ['patient', 'conditions', 'medications', 'sx_procedure',
 # along with the primary keys and default values
 
 ####  CREATE TABLES  ####
-table_patients = """
-create table if not exists patients (
-    id int auto_increment,
-    mrn varchar(255) default null unique,
-    first_name varchar(255) default null,
-    last_name varchar(255) default null,
-    zip_code varchar(255) default null,
-    dob varchar(255) default null,
-    gender varchar(255) default null,
-    contact_mobile varchar(255) default null,
-    contact_home varchar(255) default null,
-    insurance varchar(255) default null,
-    PRIMARY KEY (id) 
-);
-"""
+table_patients = """create table if not exists patients (
+        id int auto_increment,
+        mrn varchar(255) default null unique,
+        first_name varchar(255) default null,
+        last_name varchar(255) default null,
+        zip_code varchar(255) default null,
+        dob varchar(255) default null,
+        gender varchar(255) default null,
+        contact_mobile varchar(255) default null,
+        contact_home varchar(255) default null,
+        insurance varchar(255) default null,
+        PRIMARY KEY (id) 
+    );"""
 
 table_sx_procedure = """
 create table if not exists sx_procedure (

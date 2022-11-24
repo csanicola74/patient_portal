@@ -42,9 +42,8 @@ create table if not exists patients (
     gender varchar(255) default null,
     contact_mobile varchar(255) default null,
     contact_home varchar(255) default null,
-    insurance varchar(255) default null,
     PRIMARY KEY (id) 
-);
+); 
 """
 
 table_sx_procedure = """

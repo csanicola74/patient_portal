@@ -237,7 +237,7 @@ for index, row in df_patients.iterrows():
 print(df_patient_medications.head(10))
 
 # add a random procedure to each patient
-insertQuery = "INSERT INTO patient_medications (mrn, med_ndc) VALUES (%s, %s)"
+insertQuery = "INSERT INTO patient_procedure (mrn, med_ndc) VALUES (%s, %s)"
 
 for index, row in df_patient_medications.iterrows():
     db_azure.execute(insertQuery, (row['mrn'], row['med_ndc']))

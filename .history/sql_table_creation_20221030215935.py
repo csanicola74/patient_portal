@@ -23,9 +23,8 @@ db_azure = create_engine(connection_string_azure)
 tableNames_azure = db_azure.table_names()
 
 # reorder tables: patient_conditions, patient_procedure, sx_procedure, patients, conditions
-tableNames_azure = ['patient', 'conditions', 'medications', 'sx_procedure',
-                    'patient_conditions', 'patient_medications', 'patient_procedure']
-
+tableNames_azure = ['patient_conditions', 'patient_procedure',
+                    'sx_procedure', 'patients', 'conditions']
 
 # first step below is just creating a basic version of each of the tables,
 # along with the primary keys and default values
@@ -42,9 +41,8 @@ create table if not exists patients (
     gender varchar(255) default null,
     contact_mobile varchar(255) default null,
     contact_home varchar(255) default null,
-    insurance varchar(255) default null,
     PRIMARY KEY (id) 
-);
+); 
 """
 
 table_sx_procedure = """
@@ -65,15 +63,6 @@ create table if not exists conditions (
 ); 
 """
 
-table_medications = """
-create table if not exists medications (
-    id int auto_increment,
-    med_ndc varchar(255) default null unique,
-    med_human_name varchar(255) default null,
-    med_is_dangerous varchar(255) default null,
-    PRIMARY KEY (id)
-); 
-"""
 
 table_patient_procedure = """
 create table if not exists patient_procedure (
@@ -86,6 +75,7 @@ create table if not exists patient_procedure (
 ); 
 """
 
+
 table_patient_conditions = """
 create table if not exists patient_conditions (
     id int auto_increment,
@@ -97,24 +87,33 @@ create table if not exists patient_conditions (
 ); 
 """
 
+table_medications = """
+create table if not exists medications (
+    id int auto_increment,
+    med_ndc varchar(255) default null unique,
+    med_human_name varchar(255) default null,
+    med_is_dangerous varchar(255) default null,
+    PRIMARY KEY (id)
+); 
+"""
+
+
 table_patients_medications = """
 create table if not exists patient_medications (
     id int auto_increment,
     mrn varchar(255) default null,
     med_ndc varchar(255) default null,
     PRIMARY KEY (id),
-    FOREIGN KEY (mrn) REFERENCES patients(mrn) ON DELETE CASCADE,
-    FOREIGN KEY (med_ndc) REFERENCES medications(med_ndc) ON DELETE CASCADE
+    FOREIGN KEY (mrn) REFERENCES production_patients(mrn) ON DELETE CASCADE,
+    FOREIGN KEY (med_ndc) REFERENCES production_medications(med_ndc) ON DELETE CASCADE
 ); 
 """
 
 db_azure.execute(table_patients)
 db_azure.execute(table_sx_procedure)
 db_azure.execute(table_conditions)
-db_azure.execute(table_medications)
 db_azure.execute(table_patient_procedure)
 db_azure.execute(table_patient_conditions)
-db_azure.execute(table_patients_medications)
 
 
 # get tables from db_azure
